@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { DEC8_BIN } = require('mysql2/lib/constants/charsets');
 const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // The `/api/products` endpoint
@@ -7,12 +8,28 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 router.get('/', (req, res) => {
   // find all products
   // be sure to include its associated Category and Tag data
+  Product.findAll({include: [
+    Category,
+    {
+      model: Tag,
+      through: ProductTag
+    }
+  ]
+}).then(results => res.json(results))
+.catch(err => {console.log(err); res.status(500).json(err)})
 });
 
 // get one product
 router.get('/:id', (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
+  Product.findOne({
+    where: {
+      id: req.params.id
+    },
+    include: [Category, Tag]
+    
+  }).then(results => res.json(results))
 });
 
 // create new product
@@ -22,7 +39,7 @@ router.post('/', (req, res) => {
       product_name: "Basketball",
       price: 200.00,
       stock: 3,
-      tagIds: [1, 2, 3, 4]
+      tagIds: [1, 2, 3, 4]  
     }
   */
   Product.create(req.body)
@@ -91,6 +108,11 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete one product by its `id` value
+  Product.destroy({
+    where: {
+      id: req.params.id
+    }
+  }).then(Product => res.json(Product))
 });
 
 module.exports = router;
